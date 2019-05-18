@@ -1,19 +1,44 @@
 package com.appfed.speed
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
-import androidx.core.view.GravityCompat
-import androidx.appcompat.app.ActionBarDrawerToggle
+import android.view.Menu
 import android.view.MenuItem
-import androidx.drawerlayout.widget.DrawerLayout
-import com.google.android.material.navigation.NavigationView
+import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import android.view.Menu
+import androidx.core.app.ActivityCompat.requestPermissions
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
+
+
+
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
+    lateinit var locManager: LocationManager
+    lateinit var li: LocationListener
+
+    internal inner class speed : LocationListener {
+        override fun onLocationChanged(loc: Location) {
+            val thespeed = loc.getSpeed()
+            Toast.makeText(this@MainActivity, thespeed.toString(), Toast.LENGTH_LONG).show()
+        }
+
+        override fun onProviderDisabled(arg0: String) {}
+        override fun onProviderEnabled(arg0: String) {}
+        override fun onStatusChanged(arg0: String, arg1: Int, arg2: Bundle) {}
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +60,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         toggle.syncState()
 
         navView.setNavigationItemSelectedListener(this)
+
+        requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1);
+
     }
 
     override fun onBackPressed() {
@@ -63,6 +91,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
+//        testContracts(1)
         // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.nav_home -> {
@@ -87,5 +116,26 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         drawerLayout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        when (requestCode) {
+            1 -> {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    locManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                    li = speed()
+
+                    locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0f, li)
+
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return
+            }
+        }// other 'case' lines to check for other
+        // permissions this app might request
     }
 }
